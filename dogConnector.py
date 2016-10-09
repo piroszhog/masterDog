@@ -16,8 +16,8 @@ class DogConnector:
 
     _http_connection = None
     last_update_response = None
-    last_update_response_time = None
-    last_update_response_json = None
+    last_update_datetime = None
+    json_from_last_update = None
 
     def __init__(self, address, port, stats_url):
         try:
@@ -37,9 +37,9 @@ class DogConnector:
                 logging.error(datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S") + " - " + str(e))
                 self.connect()
 
-        if self.last_update_response_time and (datetime.now() - self.last_update_response_time).total_seconds() < 10:
+        if self.last_update_datetime and (datetime.now() - self.last_update_datetime).total_seconds() < 10:
                 time.sleep(10)
-        self.last_update_response_time = datetime.now()
+        self.last_update_datetime = datetime.now()
 
     def disconnect(self):
         if self._http_connection:
@@ -60,14 +60,16 @@ class DogConnector:
             self.connect()
 
         try:
-            self.last_update_response_json = json.loads(str_response)
+            self.json_from_last_update = json.loads(str_response)
+            self.json_from_last_update["localIP"] = self.address
+
         except ValueError as e:
             pass
         except Exception as e:
             logging.error(e)
             raise e
 
-        self.last_update_response_time = datetime.now()
+        self.last_update_datetime = datetime.now()
 
     def register_miner(self, name, ip):
         if not name or not ip:

@@ -7,6 +7,8 @@ from datetime import datetime
 
 class MasterDog:
 
+    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+
     _dog_connectors = []
 
     # {"name": miner_name, "ip": miner_ip, "dog_id": id (starts from 1)}
@@ -64,33 +66,33 @@ class MasterDog:
         for connector in self._dog_connectors:
             connector.update_stats()
 
-    def add_new_miner(self, name, ip):
+    def register_miner(self, name, ip):
         if not name or not ip:
             raise Exception("Name or id of miner needs for registering it!")
 
         miner_found = False
         for miner in self._all_miners:
-            if miner["ip"] == ip and miner["name"] != name:
+
+            if miner["ip"] == ip and not (miner["name"] == name):
                 miner["ip"] = None
 
             if miner["name"] == name and not miner["dog_id"]:
                 miner["ip"] = ip
                 miner_found = True
-                break
 
             if miner["name"] == name and miner["dog_id"]:
                 try:
                     self._dog_connectors[miner["dog_id"]-1].register_miner(name, ip)
                     miner_found = True
-                    break
 
                 except Exception as e:
                     logging.error("Can not add new miner " + name + "! Miner was found and watchdog returns an error.")
                     logging.error(e)
-                    raise e
+                    return False
 
         if not miner_found:
             self._all_miners.append({"name": name, "ip": ip, "dog_id": None})
+        return True
 
     def find_miner(self, name):
         if not name:
@@ -101,21 +103,30 @@ class MasterDog:
                 return miner
         return None
 
-    def bind_miner(self, name, dog_id):
-        if not name or not dog_id:
-            raise Exception("Name of miner and id of watchdog needs to bind it!")
+    def bind_miner(self, name, dog_id, dog_ip):
+        if not name or (not dog_id and not dog_ip):
+            raise Exception("Name of miner and id or IP of watchdog needs to bind it!")
 
+        if not dog_id:
+            for index, dog in enumerate(self._dog_connectors):
+                if dog.address == dog_ip:
+                    dog_id = index + 1
+
+        dog_id = int(dog_id)
         miner = self.find_miner(name)
         if not miner:
-            raise Exception("Can not bind miner " + name + ", because miner is not registered!")
+            logging.error("Can not bind miner " + name + ", because miner is not registered!")
+            return False
 
         try:
             self._dog_connectors[dog_id - 1].register_miner(name, miner["ip"])
             miner["dog_id"] = dog_id
+            return True
+
         except Exception as e:
             logging.error("Can not bind miner " + name + "! Miner was found, but watchdog returns an error.")
             logging.error(e)
-            raise e
+            return False
 
     def unbind_miner(self, name):
 
@@ -132,7 +143,27 @@ class MasterDog:
             except Exception as e:
                 logging.error("Can not unbind miner " + name + "! Miner was found, but watchdog returns an error.")
                 logging.error(e)
-                raise e
+                return False
 
-        else:
-            raise Exception("Can not unbind miner, because it's not under the dog.")
+        logging.error("Can not unbind miner, because it's not under the dog.")
+        return False
+
+    def remove_miner(self, name):
+
+        miner = self.find_miner(name)
+        if miner:
+            try:
+                self.unbind_miner(name)
+                self._all_miners.remove(miner)
+                return True
+
+            except Exception as e:
+                logging.error("Can not remove miner!")
+                logging.error(e)
+                return False
+
+        logging.error("Can not remove miner! Miner " + name + " not found.")
+        return False
+
+    def all_miners(self):
+        return self._all_miners
