@@ -1,26 +1,23 @@
 var miners = [];
 var dogs = [];
 
+// {'miner1Name': jqueryObject1, 'miner2Name': jqueryObject2, ...}
+var drawnCards = {};
+var drawnRows = {};
 
-function showSuccess(text){
+//
+// Templates
+//
+
+function alertTemplate(text, status) {
     var html =
-        '<div class="alert alert-success">' +
+        '<div class="alert alert-' + status + '">' +
             '<div class="alert-content-wrapper">' +
                 text +
             '</div>' +
         '</div>';
 
-    $('.alerts-wrapper').append(html);
-}
-
-function showSuccess(text){
-    var html =
-        '<div class="alert alert-error">' +
-            '<div class="alert-content-wrapper">' +
-                text +
-            '</div>' +
-        '</div>';
-    $('.alerts-wrapper').append(html);
+    return html;
 }
 
 function cardTemplate(miner) {
@@ -36,18 +33,18 @@ function cardTemplate(miner) {
                 '</div>' +
             '</div>' +
         '</div>' +
-        dogsSelectTemplate() +
+        dogSelectTemplate() +
     '</div>';
 
     return html;
 }
 
-function dogsSelectTemplate() {
+function dogSelectTemplate() {
     var html =
         '<div class="card-content">' +
             '<div class="select-box">' +
                 '<select class="dog-select">' +
-                    '<option selected disabled>' + 'Choose dog' + '</option>';
+                    '<option selected="true" disabled>' + 'Choose dog' + '</option>';
 
     $.each(dogs, function(index, dog) {
         html += '<option value="' + dog.localIP +'">' + dog.localIP + '</option>';
@@ -57,38 +54,9 @@ function dogsSelectTemplate() {
     return html;
 }
 
-function redrawMiner(miner) {
-    if(miner.dog_id)
-        return false;
-
-    var isNewMiner = true;
-    for(var i=0; i<miners.length; i++)
-        if(miner.name == miners[i].name) {
-            isNewMiner = false;
-            break;
-        }
-
-    if(isNewMiner) {
-        miners.push(miner);
-        var html = cardTemplate(miner);
-        $('.miner-wrapper').append(html);
-
-        //Register new events for selects
-        selectOnChangeListener();
-    }
-}
-
-function redrawDogSelects(){
-    $.each(miners, function(index, miner) {
-        var card = $('#card' + miner.name);
-        card.find('.card-content').remove();
-        card.append(dogsSelectTemplate());
-    });
-}
-
 function buttonTemplate(buttonText) {
     var html =
-        '<div class="buttons-group-item">' +
+        '<div class="buttons-group-item ' + buttonText + '">' +
             '<button class="button button-flat">' +
                 '<div class="button-text">' + buttonText + '</div>' +
             '</button>' +
@@ -104,7 +72,7 @@ function buttonsGroupTemplate(buttonsTexts) {
     return html;
 }
 
-function dogsTableHeadTemplate() {
+function dogTableHeadTemplate() {
     var html =
         '<thead><tr>' +
             '<td class="column-header">name</td>' +
@@ -117,7 +85,7 @@ function dogsTableHeadTemplate() {
     return html;
 }
 
-function dogsTableRowTemplate(minerFromDogState) {
+function dogTableRowTemplate(minerFromDogState) {
     var html =
         '<tr id="row' + minerFromDogState.name + '" </td>' +
             '<td class="name">' + minerFromDogState.name + '</td>' +
@@ -130,6 +98,81 @@ function dogsTableRowTemplate(minerFromDogState) {
     return html;
 }
 
+function dogTableTemplate(dog) {
+    var html =
+        '<div id="dog' + dog.localIP.split('.').join("") + '" class="dog-table-wrapper">' +
+            '<div class="dog-table-title">' +
+                'Watchdog ' + dog.localIP +
+            '</div>' +
+            '<table class="data-table">' +
+                dogTableHeadTemplate() +
+                '<tbody>';
+    
+    html += '</tbody></table></div>';
+    return html;
+}
+
+function dogsTablesListTemplate() {
+    var html =
+        '<div class="tables-list">' +
+			'<div class="centering-wrapper">' +
+            '</div>' +
+        '</div>';
+    return html;
+}
+
+
+
+//
+// UI functions
+//
+
+function removeObjectByTimeout(jqueryObject, timeout) {
+    setTimeout(function removeObjectByTimeout() {
+        jqueryObject.remove();
+    }, timeout);
+}
+
+// status = 'success' or 'error'
+function showAlert(text, status) {
+    removeObjectByTimeout($(alertTemplate(text, status)).appendTo('.alerts-wrapper'), 3000);
+}
+
+function redrawCard(miner) {
+    $('#card' + miner.name).find('.card-subtitle-primary-text').html(miner.ip);
+}
+
+function drawCard(miner) {
+    if(miner.dog_ip)
+        return false;
+
+    var isNewMiner = true;
+    for(var i=0; i<miners.length; i++)
+        if(miner.name == miners[i].name) {
+            isNewMiner = false;
+            break;
+        }
+
+    if(isNewMiner) {
+        miners.push(miner);
+        drawnCards[miner.name] = $(cardTemplate(miner)).appendTo('.miner-wrapper');
+
+        //Register new events for selects
+        selectOnChangeListener(drawnCards[miner.name]);
+    }
+    else
+        redrawCard(miner);
+}
+
+function redrawDogsSelects() {
+    $.each(miners, function(index, miner) {
+        var card = $('#card' + miner.name);
+        card.find('.card-content').remove();
+        card.append(dogSelectTemplate());
+        selectOnChangeListener(card);
+    });
+}
+
 function redrawTableRow(minerFromDogState) {
     var row = $('#row' + minerFromDogState.name);
     row.find('.name').html(minerFromDogState.name);
@@ -140,79 +183,128 @@ function redrawTableRow(minerFromDogState) {
 }
 
 function drawDogsWrapper() {
-    var html =
-        '<div class="tables-list">' +
-			'<div class="centering-wrapper">' +
-            '</div>' +
-        '</div>';
+    $('.body-wrapper').append(dogsTablesListTemplate());
+}
 
-    $('.body-wrapper').append(html);
+function drawTableRow(jqueryTableObject, miner){
+    drawnRows[miner.name] = $(dogTableRowTemplate(miner)).appendTo(jqueryTableObject.find('tbody'));
+    drawnRows[miner.name].find('.unbind').click(function(){unbindMiner(miner.name);});
+}
+
+function drawDogTable(dog) {
+    var table = $(dogTableTemplate(dog)).appendTo('.centering-wrapper');
+    $.each(dog.miners, function(index, miner) {
+        drawTableRow(table, miner);
+    });
 }
 
 function drawDogsTables() {
-
     for(var i=0; i<dogs.length; i++) {
-
-        var html = '';
-        var table = $('#dog' + i);
+        var table = $('#dog' + dogs[i].localIP.split('.').join(""));
+        
         if(!table.length)
-            html +=
-                '<div id="dog' + i + '" class="dog-table-wrapper">' +
-                    '<div class="dog-table-title">' +
-                        dogs[i].localIP +
-                    '</div>' +
-                    '<table class="data-table">' +
-                        dogsTableHeadTemplate() +
-                        '<tbody>';
-
-        $.each(dogs[i].miners, function(index, miner) {
-            var row = $('#row' + miner.name);
-
-            if (row.length)
-                redrawTableRow(miner);
-            else
-                html += dogsTableRowTemplate(miner);
-        });
-
-
-        if (!table.length) {
-            html += '</tbody></table></div>';
-            $('.centering-wrapper').append(html);
-        }
+            drawDogTable(dogs[i]);
         else
-            table.find('tbody').append(html);
+            $.each(dogs[i].miners, function (index, miner) {
+                if (drawnRows[miner.name])
+                    redrawTableRow(miner);
+                else
+                    drawTableRow(table, miner);
+            });
     }
-
 }
 
-function removeAbsentMiners(actualMiners) {
+function removeCardsOfAbsentMiners() {
+    $.each(drawnCards, function(minerName, drawnObject) {
+        minerFound = false;
+        for (var i = 0; i < miners.length; i++)
+            if (minerName == miners[i].name)
+                minerFound = true;
 
+        if (!minerFound) {
+            drawnObject.remove();
+            delete drawnCards[minerName];
+        }
+    });
 }
 
-function findMiner(minerName){
+function removeRowsOfAbsentMiners() {
+    $.each(drawnRows, function(minerName, drawnObject){
+        minerFound = false;
+        for(var j=0; j<dogs.length; j++) {
+            for (var i = 0; i < dogs[j].miners.length; i++)
+                if (minerName == dogs[j].miners[i].name) {
+                    minerFound = true;
+                    break;
+                }
+
+            if(minerFound)
+                break;
+        }
+
+        if (!minerFound) {
+            drawnObject.remove();
+            delete drawnRows[minerName];
+        }
+    });
+}
+
+
+
+//
+// Logical functions
+//
+
+function findMiner(minerName) {
     for(var i=0; i<miners.length; i++)
         if(miners[i].name == minerName)
             return miners[i];
     return false
 }
 
-function bindMiner(minerName, dogIP){
+function bindMiner(minerName, dogIP) {
+    if(!dogIP || !minerName) {
+        showAlert('You must set minerName and dogIP to bind miner!', 'error');
+        return false;
+    }
+
     $.ajax({url: "/bind?name=" + minerName + "&dogIP=" + dogIP, method: "GET"})
-        .done(function(){
-            $('#card' + minerName).remove();
-            showSuccess();
+        .done(function(data) {
+            showAlert('Miner ' + minerName + ' bound to dog ' + dogIP, 'success');
+            return true;
         })
-        .fail(function(){showError();});
+        .fail(function() {
+            showAlert('Can not bind ' + minerName + ' to dog ' + dogIP, 'error');
+            return false;
+        });
 }
 
-function selectOnChangeListener(){
-    $('.dog-select').change(function(){
+function unbindMiner(minerName) {
+    $.ajax({url: "/unbind?name=" + minerName, method: "GET"})
+        .done(function() {
+            showAlert('Miner ' + minerName + ' unbound from dog', 'success');
+            return true;
+        })
+        .fail(function() {
+            showAlert('Can not unbind ' + minerName + ' from dog', 'error');
+            return false;
+        });
+}
+
+function selectOnChangeListener(jqueryObjectOfCard) {
+    jqueryObjectOfCard.find('.dog-select').change(function() {
         bindMiner(
             $(this).closest('.miner-card').find('.card-title-primary-text').html(),
-            $(this).val()
-        );
+            $(this).val());
     });
 }
+
+
+
+
+//
+// Entry points
+//
 
 $(document).ready(function() {
 
@@ -223,10 +315,12 @@ $(document).ready(function() {
         {
             $.ajax({url: "/miners", method: "GET"})
                 .done(function(data) {
-                    var actualMiners = JSON.parse(data).miners;
+                    var actualMiners = data.miners;
                     $.each(actualMiners, function(index, miner) {
-                        redrawMiner(miner);
+                        drawCard(miner);
                     });
+                    miners = actualMiners;
+                    removeCardsOfAbsentMiners();
                 })
                 .always(get_miners());
         }, 1000);
@@ -236,20 +330,17 @@ $(document).ready(function() {
         setTimeout(function() {
             $.ajax({url: "/dogs", method: "GET"})
                 .done(function(data) {
-                    var actualDogs = JSON.parse(data).dogs;
-
+                    var actualDogs = data.dogs;
                     if(actualDogs.length != dogs.length) {
                         dogs = actualDogs;
-                        redrawDogSelects();
-
-                        //Register new events for selects
-                        selectOnChangeListener();
+                        redrawDogsSelects();
                         drawDogsTables();
                     }
                     else {
                         dogs = actualDogs;
                         drawDogsTables();
                     }
+                    removeRowsOfAbsentMiners();
                 })
                 .always(get_dogs());
         }, 1000);

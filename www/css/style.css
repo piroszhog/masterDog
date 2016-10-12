@@ -883,10 +883,23 @@ select {
   background-color: #e5e7ea;
   padding: 1rem 0;
   overflow-y: auto;
-  min-width: 13.5rem;
-  max-width: 13.5rem;
+  overflow-x: hidden;
   height: 100vh;
-  max-height: 100vh; }
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0; }
+
+.side-header {
+  font-size: 18px;
+  margin: 10px 0.5rem;
+  order: 1; }
+
+.miner-wrapper {
+  order: 2; }
+  .miner-wrapper:empty + .side-header {
+    display: none;
+    position: absolute; }
 
 .miner-card {
   margin: 0 0.5rem;
@@ -902,8 +915,6 @@ select {
   margin-bottom: 1rem; }
 
 .tables-list {
-  min-width: calc(100% - 13.5rem);
-  max-width: calc(100% - 13.5rem);
   height: 100vh;
   max-height: 100vh;
   flex-grow: 1;
@@ -936,3 +947,5 @@ select {
   .data-table .button-text {
     padding-left: 0;
     padding-right: 0; }
+
+/*# sourceMappingURL=style.css.map */
