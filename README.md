@@ -4,6 +4,7 @@
 
 * python >= 3.5
 * aiohttp
+* coloredlogs
 
 ### Run
 
