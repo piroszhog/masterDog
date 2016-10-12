@@ -2,11 +2,13 @@
 
 ### Dependencies
 
-<pre>python >= 3.5</pre>
-<pre>aiohttp</pre>
+* python >= 3.5
+* aiohttp
 
 ### Run
 
 <pre>python3.5 masterDog.py</pre>
+
+### Preview
 
 ![Demo](https://raw.githubusercontent.com/piroszhog/masterDog/master/preview.PNG)
