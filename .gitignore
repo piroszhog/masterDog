@@ -1,6 +1,7 @@
 .idea
 *~
 *.log*
+masterDog.conf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
