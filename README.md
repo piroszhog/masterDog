@@ -1,13 +1,15 @@
 # Web service for several watchdogs managing
 
 ### Dependencies
-
 * python >= 3.5
 * aiohttp
 * coloredlogs
 
-### Run
+### Install
+<pre>python3.5 -m pip install coloredlogs</pre>
+<pre>python3.5 -m pip install aiohttp</pre>
 
+### Run
 <pre>python3.5 masterDog.py</pre>
 
 ### Preview
