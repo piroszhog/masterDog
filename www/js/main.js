@@ -66,7 +66,7 @@ function buttonTemplate(buttonText) {
 
 function buttonsGroupTemplate(buttonsTexts) {
     var html = '<td><div class="buttons-group">';
-    for(var i=0; i<buttonsTexts.length; i++)
+    for (var i=0; i<buttonsTexts.length; i++)
         html += buttonTemplate(buttonsTexts[i]);
     html += '</div></td>';
     return html;
@@ -147,7 +147,7 @@ function drawCard(miner) {
         return false;
 
     var isNewMiner = true;
-    for(var i=0; i<miners.length; i++)
+    for (var i=0; i<miners.length; i++)
         if(miner.name == miners[i].name) {
             isNewMiner = false;
             break;
@@ -199,7 +199,7 @@ function drawDogTable(dog) {
 }
 
 function drawDogsTables() {
-    for(var i=0; i<dogs.length; i++) {
+    for (var i=0; i<dogs.length; i++) {
         var table = $('#dog' + dogs[i].localIP.split('.').join(""));
         
         if(!table.length)
@@ -231,7 +231,7 @@ function removeCardsOfAbsentMiners() {
 function removeRowsOfAbsentMiners() {
     $.each(drawnRows, function(minerName, drawnObject){
         minerFound = false;
-        for(var j=0; j<dogs.length; j++) {
+        for (var j=0; j<dogs.length; j++) {
             for (var i = 0; i < dogs[j].miners.length; i++)
                 if (minerName == dogs[j].miners[i].name) {
                     minerFound = true;
@@ -256,7 +256,7 @@ function removeRowsOfAbsentMiners() {
 //
 
 function findMiner(minerName) {
-    for(var i=0; i<miners.length; i++)
+    for (var i=0; i<miners.length; i++)
         if(miners[i].name == minerName)
             return miners[i];
     return false
@@ -268,7 +268,7 @@ function bindMiner(minerName, dogIP) {
         return false;
     }
 
-    $.ajax({url: "/bind?name=" + minerName + "&dogIP=" + dogIP, method: "GET"})
+    return $.ajax({url: "/bind?name=" + minerName + "&dogIP=" + dogIP, method: "GET"})
         .done(function(data) {
             showAlert('Miner ' + minerName + ' bound to dog ' + dogIP, 'success');
             return true;
@@ -280,7 +280,7 @@ function bindMiner(minerName, dogIP) {
 }
 
 function unbindMiner(minerName) {
-    $.ajax({url: "/unbind?name=" + minerName, method: "GET"})
+    return $.ajax({url: "/unbind?name=" + minerName, method: "GET"})
         .done(function() {
             showAlert('Miner ' + minerName + ' unbound from dog', 'success');
             return true;
@@ -295,7 +295,7 @@ function selectOnChangeListener(jqueryObjectOfCard) {
     jqueryObjectOfCard.find('.dog-select').change(function() {
         bindMiner(
             $(this).closest('.miner-card').find('.card-title-primary-text').html(),
-            $(this).val());
+            $(this).val()).then($(this).val("Choose dog"));
     });
 }
 

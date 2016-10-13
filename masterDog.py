@@ -35,9 +35,12 @@ class MasterDog:
 
         dog_id = 0
         dog_ip = self._get_var("WATCHDOG_IP_" + str(dog_id), is_required=True)
+
         while dog_ip:
+            dog_port = self._get_var("WATCHDOG_PORT_" + str(dog_id), is_required=True)
             new_dog = {'ip': dog_ip,
-                        'stats_url': 'http://' + dog_ip + ':' + str(32000) + '/state',
+                       'port': dog_port,
+                        'stats_url': 'http://' + dog_ip + ':' + str(dog_port) + '/state',
                         'last_update_response': None,
                         'last_update_datetime': None,
                         'last_data': None}
@@ -174,7 +177,7 @@ class MasterDog:
         for dog in self._dogs:
             if dog["ip"] == dog_ip:
                 try:
-                    url = 'http://' + dog['ip'] + ":32000/register?name=" + name + "&ip=" + miner_ip
+                    url = 'http://' + dog['ip'] + ":" + str(dog['port']) + "/register?name=" + name + "&ip=" + miner_ip
                     logging.info("Go to " + url)
                     async with self.client.get(url) as response:
                         assert response.status == 200
@@ -194,21 +197,22 @@ class MasterDog:
     async def unbind_miner(self, name, remove_after=False):
 
         for dog in self._dogs:
-            for miner in dog['last_data']['miners']:
-                if name == miner['name']:
-                    try:
-                        url = 'http://' + dog['ip'] + ':32000/remove?name=' + name
-                        async with self.client.get(url) as response:
-                            assert response.status == 200
-                            await response.read()
+            if dog['last_data'] and dog['last_data']['miners']:
+                for miner in dog['last_data']['miners']:
+                    if name == miner['name']:
+                        try:
+                            url = 'http://' + dog['ip'] + ":" + str(dog['port']) + '/remove?name=' + name
+                            async with self.client.get(url) as response:
+                                assert response.status == 200
+                                await response.read()
 
-                    except Exception as e:
-                        logging.critical(e)
-                        raise e
+                        except Exception as e:
+                            logging.critical(e)
+                            raise e
 
-                    if not remove_after:
-                        self._new_miners.append({"name": name, "ip": miner["host"], "dog_ip": None})
-                    return True
+                        if not remove_after:
+                            self._new_miners.append({"name": name, "ip": miner["host"], "dog_ip": None})
+                        return True
 
         logging.error("Can not unbind miner, because it's not under the dog.")
         return False

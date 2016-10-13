@@ -63,7 +63,8 @@ class HTTPServer:
         try:
             response = []
             for dog in self.watcher._dogs:
-                response.append(dog['last_data'])
+                if dog['last_update_response']:
+                    response.append(dog['last_data'])
             return web.json_response(data={"dogs": response})
 
         except Exception as e:
