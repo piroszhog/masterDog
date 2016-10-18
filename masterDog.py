@@ -162,16 +162,15 @@ class MasterDog:
             raise Exception("Name of miner needs to bind it!")
 
         miner = None
-        if not miner_ip:
-            for one_miner in self._new_miners:
-                if one_miner['name'] == name:
-                    miner = one_miner
-                    miner_ip = one_miner['ip']
-                    break
+        for one_miner in self._new_miners:
+            if one_miner['name'] == name:
+                miner = one_miner
+                if not miner_ip:
+                    miner_ip = miner['ip']
+                break
 
         if not miner_ip and not miner:
             logging.error("Can not bind miner " + name + ", because miner is not registered!")
-            print(self._new_miners)
             return False
 
         for dog in self._dogs:
