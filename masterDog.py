@@ -121,21 +121,22 @@ class MasterDog:
         # Try to find in dogs
         try:
             for dog in self._dogs:
-                for miner in dog['last_data']['miners']:
-                    if miner["host"] == ip and miner["name"] != name:
-                        try:
-                            await self.unbind_miner(miner["name"], remove_after=True)
-                        except Exception as e:
-                            return False
+                if dog['last_data'] and dog['last_data']['miners']:
+                    for miner in dog['last_data']['miners']:
+                        if miner["host"] == ip and miner["name"] != name:
+                            try:
+                                await self.unbind_miner(miner["name"], remove_after=True)
+                            except Exception as e:
+                                return False
 
-                    if miner["name"] == name and miner["host"] != ip:
-                        try:
-                            new_miner = False
-                            await self.bind_miner(name, dog['ip'], miner_ip=ip)
+                        if miner["name"] == name and miner["host"] != ip:
+                            try:
+                                new_miner = False
+                                await self.bind_miner(name, dog['ip'], miner_ip=ip)
 
-                        except Exception as e:
-                            logging.error("Can not register miner " + name + "!")
-                            return False
+                            except Exception as e:
+                                logging.error("Can not register miner " + name + "!")
+                                return False
 
         except Exception as e:
             logging.error(e)
