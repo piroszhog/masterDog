@@ -145,7 +145,7 @@ class MasterDog:
         if new_miner:
             for miner in self._new_miners:
                 if miner["name"] == name:
-                    miner["host"] = ip
+                    miner["ip"] = ip
                     new_miner = False
                 if not (miner["name"] == name) and miner["ip"] == ip:
                     self._new_miners.remove(miner)
