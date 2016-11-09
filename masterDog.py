@@ -104,6 +104,12 @@ class MasterDog:
                     dog['last_data'] = json.loads(dog['last_update_response'])
                     dog['last_data']['localIP'] = dog['ip']
 
+                    if dog['last_data'] and dog['last_data']['miners']:
+                        for miner in dog['last_data']['miners']:
+                            for new_miner in self._new_miners:
+                                if new_miner["name"] == miner["name"]:
+                                    self.register_miner(new_miner["name"], new_miner["ip"])
+
                 except ValueError as e:
                     pass
                 except Exception as e:
