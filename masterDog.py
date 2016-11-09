@@ -108,7 +108,7 @@ class MasterDog:
                         for miner in dog['last_data']['miners']:
                             for new_miner in self._new_miners:
                                 if new_miner["name"] == miner["name"]:
-                                    self.register_miner(new_miner["name"], new_miner["ip"])
+                                    await self.bind_miner(new_miner["name"], dog['ip'], miner_ip=new_miner["ip"])
 
                 except ValueError as e:
                     pass
