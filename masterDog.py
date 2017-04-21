@@ -130,10 +130,12 @@ class MasterDog:
                 if dog['last_data'] and dog['last_data']['miners']:
                     for miner in dog['last_data']['miners']:
                         if miner["host"] == ip and miner["name"] != name:
-                            try:
-                                await self.unbind_miner(miner["name"], remove_after=True)
-                            except Exception as e:
-                                return False
+                            logging.warning("Miners " + str(name) + " and " + str(miner["name"]) +
+                                            " has same IP " + str(ip))
+                            # try:
+                            #    await self.unbind_miner(miner["name"], remove_after=True)
+                            # except Exception as e:
+                            #    return False
 
                         if miner["name"] == name:
                             new_miner = False
@@ -233,6 +235,8 @@ class MasterDog:
         logging.error("Can not remove miner! Miner " + name + " not found.")
         return False
 
+    # TODO:
+    # Check rule for removing. It's seems to be incorrect.
     async def remove_old_miners(self):
         while True:
             for miner in self._new_miners:
